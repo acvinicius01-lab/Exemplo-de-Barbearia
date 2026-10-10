@@ -77,6 +77,10 @@ node --env-file=.env server.mjs
 
 ## Verificar
 
+Para conferir as partes juntas, execute `npm run verify` (ou `npm.cmd run verify` no PowerShell). O teste `tests/system.test.mjs` inicia um servidor e banco temporários, verifica os arquivos de design/interface e usa o mesmo cliente HTTP do front-end para criar uma reserva, autenticá-la no painel, conferir clientes/serviços no banco, bloquear/liberar horários e cancelar. Nenhuma reserva real é alterada.
+
+Site e painel são entregues pelo **mesmo servidor**: `/` e `/admin`, com APIs em `/api`. Não é necessário iniciar um servidor separado para cada parte. Na sessão local atual, ambos estão na porta 3001. A porta padrão de `npm start` continua sendo 3000; se ela já estiver ocupada, não inicie outra cópia ali. Para escolher 3001 no PowerShell: `$env:PORT='3001'` e depois `npm.cmd start`.
+
 O site e o painel compartilham `api-client.mjs`, que envia as credenciais da sessão, preserva os erros da API e trata falhas de rede/timeout sem repetir gravações. O botão de reserva só é liberado depois da consulta de disponibilidade e da seleção do horário. A agenda é atualizada após operações e ao retornar à aba.
 
 Os layouts incluem ajustes para telas estreitas (320–420 px), celular (até 720 px), tablet e desktop: colunas flexíveis, filtros empilhados, campos de 16 px e controles de toque ampliados. A sessão atual não possui navegador disponível para inspeção visual; essas alterações ainda precisam de uma conferência visual em dispositivos reais.
