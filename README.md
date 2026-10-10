@@ -28,6 +28,14 @@ Abra **http://localhost:3000**. Não abra o HTML diretamente: a agenda precisa d
 
 Os arquivos anteriores foram preservados em `assets/previous-*`, ignorados pelo Git e não servidos pela API. As fontes usam Google Fonts e têm alternativas locais quando a conexão não está disponível. As ilustrações não dependem de serviços externos.
 
+## Painel administrativo
+
+Abra `/admin` para gerenciar a agenda. No primeiro uso local, execute `npm run setup:admin` e reinicie o servidor. A senha gerada fica no arquivo privado `data/admin-access.txt`; ela não é enviada ao GitHub. O acesso local já foi configurado nesta entrega.
+
+O painel permite escolher a data, consultar nome/telefone/serviço dos clientes, cancelar reservas com confirmação, bloquear horários livres com motivo interno e liberar bloqueios. Os bloqueios são persistidos e respeitados pela agenda pública. É necessário login para todas as operações e para consultar os dados administrativos.
+
+Para hospedagem, domínio, acesso em produção e Docker, consulte [DEPLOY.md](DEPLOY.md). O Blueprint `render.yaml` e o workflow de testes do GitHub Actions acompanham o projeto.
+
 ## Funcionalidades
 
 - Layout para computador e celular, com menu móvel.
@@ -80,7 +88,7 @@ Esta entrega é local, ainda não publicada. O projeto precisa de uma hospedagem
 
 Para hospedar com disco temporário, funções sem servidor ou várias máquinas, adapte `database.mjs` para um banco compartilhado na nuvem. O SQLite atual é adequado a uma implantação com armazenamento local persistente; ele não cria automaticamente um banco na nuvem.
 
-Antes de usar para atendimento real, confirme serviços, valores, endereço e horários com Nelson, substitua os avisos de demonstração, defina a política de privacidade e acrescente limites de requisição na hospedagem. Não há painel administrativo, pagamentos ou integração de WhatsApp nesta versão.
+Antes de usar para atendimento real, confirme serviços, valores, endereço e horários com Nelson, substitua os avisos de demonstração, defina a política de privacidade e acrescente limites de requisição na hospedagem. Há painel administrativo protegido; não há pagamentos ou integração de WhatsApp nesta versão.
 
 ## Informações confirmadas e exemplos
 

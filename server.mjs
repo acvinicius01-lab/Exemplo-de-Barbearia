@@ -3,13 +3,17 @@ import { readFile } from 'node:fs/promises';
 import { randomBytes } from 'node:crypto';
 import { openDatabase, defaultDatabasePath } from './database.mjs';
 import { services } from './services.mjs';
+import { createAuth } from './admin-auth.mjs';
 
 const base = new URL('./', import.meta.url);
 const today = () => new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Fortaleza',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 const database = await openDatabase(process.env.DATABASE_PATH || defaultDatabasePath, process.env.DATABASE_PATH ? null : new URL('./data/reservas.json',base));
+const auth = await createAuth();
 const staticFiles = new Map([
   ['/', ['index.html','text/html']], ['/index.html',['index.html','text/html']],
   ['/styles.css',['styles.css','text/css']], ['/app.js',['app.js','text/javascript']],
+  ['/admin',['admin.html','text/html']], ['/admin.html',['admin.html','text/html']],
+  ['/admin.css',['admin.css','text/css']], ['/admin.js',['admin.js','text/javascript']],
   ['/assets/brand.svg',['assets/brand.svg','image/svg+xml']], ['/assets/barber-art.svg',['assets/barber-art.svg','image/svg+xml']],
 ]);
 
@@ -40,9 +44,41 @@ const server = http.createServer(async (request, response) => {
   try {
     const url = new URL(request.url,'http://localhost');
     if (['POST','DELETE'].includes(request.method) && request.headers['sec-fetch-site'] === 'cross-site') return json(response,403,{error:'Requisição não permitida.'});
+    if (['POST','DELETE'].includes(request.method) && request.headers.origin) {
+      const origin = new URL(request.headers.origin);
+      if (origin.host !== request.headers.host) return json(response,403,{error:'Origem não permitida.'});
+    }
+    if (url.pathname.startsWith('/api/admin/')) {
+      if (url.pathname === '/api/admin/login' && request.method === 'POST') {
+        const data = await body(request);
+        const result = auth.login(data.password,request.socket.remoteAddress || 'unknown');
+        if (result.token) auth.setCookie(request,response,result.token);
+        return json(response,result.status,result.token ? {ok:true} : {error:result.error});
+      }
+      if (!auth.authenticated(request)) return json(response,401,{error:'Entre no painel para continuar.'});
+      if (url.pathname === '/api/admin/session' && request.method === 'GET') return json(response,200,{ok:true,today:today()});
+      if (url.pathname === '/api/admin/logout' && request.method === 'POST') { auth.logout(request); auth.setCookie(request,response); return json(response,200,{ok:true}); }
+      if (url.pathname === '/api/admin/schedule' && request.method === 'GET') {
+        const date = url.searchParams.get('date');
+        if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(+new Date(date+'T12:00:00-03:00')) || new Date(date+'T12:00:00-03:00').toISOString().slice(0,10) !== date) return json(response,400,{error:'Data inválida.'});
+        return json(response,200,{date,bookings:database.list(date),blocks:database.blocks(date),slots:slots(date),today:today()});
+      }
+      if (url.pathname === '/api/admin/blocks' && request.method === 'POST') {
+        const data = await body(request);
+        if (!slots(data.date).includes(data.time) || !(new Date(`${data.date}T${data.time}:00-03:00`) > new Date()) || typeof data.reason !== 'string' || data.reason.length > 120 || /[\x00-\x1f\x7f]/.test(data.reason)) return json(response,400,{error:'Informe um horário futuro válido e motivo de até 120 caracteres.'});
+        try { database.block(data.date,data.time,data.reason.trim()); }
+        catch (error) { if (/slot booked|UNIQUE constraint/.test(error.message)) return json(response,409,{error:'Horário reservado ou já bloqueado. Cancele a reserva antes de bloquear.'}); throw error; }
+        return json(response,201,{ok:true});
+      }
+      const blockRoute = /^\/api\/admin\/blocks\/(\d{4}-\d{2}-\d{2})\/(\d{2}:\d{2})$/.exec(url.pathname);
+      if (blockRoute && request.method === 'DELETE') { const removed = database.unblock(blockRoute[1],blockRoute[2]); return json(response,removed ? 200 : 404,removed ? {ok:true} : {error:'Bloqueio não encontrado.'}); }
+      const adminBooking = /^\/api\/admin\/bookings\/([a-f0-9]{32})$/.exec(url.pathname);
+      if (adminBooking && request.method === 'DELETE') { const removed = database.remove(adminBooking[1]); return json(response,removed ? 200 : 404,removed ? {ok:true} : {error:'Reserva não encontrada.'}); }
+      return json(response,404,{error:'Operação não encontrada.'});
+    }
     if (request.method === 'GET' && url.pathname === '/api/config') return json(response,200,{today:today(),services});
     if (request.method === 'GET' && url.pathname === '/api/availability') {
-      const date = url.searchParams.get('date'), occupied = database.occupied(date || '');
+      const date = url.searchParams.get('date'), occupied = new Set([...database.occupied(date || ''),...database.blocked(date || '')]);
       return json(response,200,{date,today:today(),slots:slots(date).map(time => ({time,available:new Date(`${date}T${time}:00-03:00`) > new Date() && !occupied.has(time)}))});
     }
     if (request.method === 'POST' && url.pathname === '/api/bookings') {
@@ -51,7 +87,7 @@ const server = http.createServer(async (request, response) => {
       if (typeof data.name !== 'string' || data.name.trim().length < 2 || data.name.length > 80 || /[\x00-\x1f\x7f]/.test(data.name) || typeof data.phone !== 'string' || !/^\d{10,11}$/.test(data.phone) || !service) return json(response,400,{error:'Informe nome, telefone com DDD e um serviço válido.'});
       if (!slots(data.date).includes(data.time) || !(new Date(`${data.date}T${data.time}:00-03:00`) > new Date())) return json(response,409,{error:'Horário indisponível. Escolha outro.'});
       const booking = {code:randomBytes(16).toString('hex'),name:data.name.trim(),phone:data.phone,service:service.name,price:service.price,date:data.date,time:data.time};
-      try { database.create(booking); } catch (error) { if (error.errcode === 2067 || String(error.message).includes('UNIQUE constraint failed: bookings.date, bookings.time')) return json(response,409,{error:'Este horário acabou de ser reservado. Escolha outro.'}); throw error; }
+      try { database.create(booking); } catch (error) { if (error.errcode === 2067 || /slot blocked|UNIQUE constraint failed: bookings.date, bookings.time/.test(error.message)) return json(response,409,{error:'Este horário ficou indisponível. Escolha outro.'}); throw error; }
       return json(response,201,booking);
     }
     const bookingRoute = /^\/api\/bookings\/([a-f0-9]{32})$/.exec(url.pathname);

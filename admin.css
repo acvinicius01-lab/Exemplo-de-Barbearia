@@ -1,0 +1,39 @@
+.admin-main { min-height: 72vh; padding-block: 35px 70px; }
+.admin-header-actions { display: flex; gap: 22px; align-items: center; }
+.login-panel { max-width: 470px; margin: 35px auto 60px; padding: 35px; background: #edf0e5; border: 1px solid var(--line); border-radius: 8px; }
+.login-panel h1, .admin-title h1 { font-size: 42px; letter-spacing: -1.7px; }
+.login-panel .button { width: 100%; }
+.admin-title { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin-bottom: 30px; }
+.admin-title p { font-size: 12px; }
+.date-toolbar { display: flex; align-items: center; gap: 12px; padding: 20px; background: #fff; border: 1px solid var(--line); border-radius: 6px; margin-bottom: 18px; }
+.date-toolbar input { margin: 0; }
+.date-toolbar > button:not(.button) { width: 40px; height: 40px; background: #edf0e5; border: 1px solid var(--line); color: var(--ink); border-radius: 4px; }
+.date-toolbar > .button { align-self: end; }
+.admin-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 18px; margin: 25px 0; }
+.admin-stats article { background: #edf0e5; border: 1px solid var(--line); padding: 22px; border-radius: 6px; }
+.admin-stats span { font-size: 9px; letter-spacing: 1.3px; }
+.admin-stats strong { display: block; font-size: 34px; font-weight: 500; margin-block: 12px 6px; }
+.admin-stats small { font-size: 11px; color: var(--muted); }
+.admin-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 22px; align-items: start; }
+.admin-card { padding: 28px; background: white; border: 1px solid var(--line); border-radius: 6px; }
+.admin-card h2 { font-size: 25px; letter-spacing: -.7px; }
+.admin-card-heading { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding-bottom: 20px; border-bottom: 1px solid var(--line); }
+.admin-card-heading span { font-size: 10px; color: var(--muted); }
+.appointment { padding-block: 20px; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 58px 1fr auto; align-items: start; gap: 15px; }
+.appointment > strong { font-size: 16px; font-weight: 500; background: #edf0e5; border-radius: 4px; text-align: center; padding: 10px 4px; }
+.appointment h3 { font-size: 14px; margin-bottom: 7px; overflow-wrap: anywhere; }
+.appointment p { font-size: 11px; margin: 0; }
+.appointment a { display: inline-block; font-size: 12px; margin-top: 8px; text-decoration: underline; }
+.danger-button { color: #983b29; background: #fff; border: 1px solid #e9d7d0; border-radius: 4px; font-size: 10px; padding: 9px; }
+.danger-button:hover { background: #fae9e3; }
+.empty-state { text-align: center; padding-block: 35px; font-size: 12px; }
+.admin-card .field-note { margin-block: 14px 23px; }
+.admin-card select { width: 100%; font: inherit; font-size: 12px; border: 1px solid var(--line); border-radius: 4px; padding: 13px; margin-bottom: 20px; background: var(--cream); color: var(--ink); }
+.admin-card select:focus-visible { outline: 3px solid #b78b3e; outline-offset: 4px; }
+.admin-card form .button { width: 100%; }
+.blocks-title { font-size: 14px; font-weight: 500; border-top: 1px solid var(--line); margin: 28px 0 12px; padding-top: 23px; }
+.blocked-row { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding-block: 12px; border-bottom: 1px solid var(--line); }
+.blocked-row strong { font-size: 13px; }
+.blocked-row p { font-size: 11px; margin: 5px 0 0; overflow-wrap: anywhere; }
+.blocked-row button { background: #edf0e5; border: 1px solid var(--line); border-radius: 4px; font-size: 10px; padding: 9px; color: var(--ink); }
+@media(max-width:720px) { .admin-title { display: block; } .admin-title h1 { font-size: 36px; } .date-toolbar { flex-wrap: wrap; padding: 15px; gap: 9px; } .admin-stats { gap: 8px; } .admin-stats article { padding: 14px 10px; } .admin-stats span { font-size: 7px; letter-spacing: .5px; } .admin-stats small { font-size: 9px; } .admin-grid { grid-template-columns: 1fr; } .admin-card { padding: 20px; } .appointment { grid-template-columns: 52px 1fr; } .appointment button { grid-column: 2; justify-self: start; } .login-panel { padding: 25px; margin-top: 10px; } .login-panel h1 { font-size: 36px; } }

@@ -12,7 +12,17 @@ export async function openDatabase(filename, legacyFile) {
       service TEXT NOT NULL, price REAL, date TEXT NOT NULL, time TEXT NOT NULL,
       UNIQUE(date, time)
     );
-    CREATE TABLE IF NOT EXISTS migrations (name TEXT PRIMARY KEY);`);
+    CREATE TABLE IF NOT EXISTS migrations (name TEXT PRIMARY KEY);
+    CREATE TABLE IF NOT EXISTS blocks (
+      date TEXT NOT NULL, time TEXT NOT NULL, reason TEXT NOT NULL DEFAULT '',
+      PRIMARY KEY(date, time)
+    );
+    CREATE TRIGGER IF NOT EXISTS no_booking_in_block BEFORE INSERT ON bookings
+      WHEN EXISTS (SELECT 1 FROM blocks WHERE date = NEW.date AND time = NEW.time)
+      BEGIN SELECT RAISE(ABORT, 'slot blocked'); END;
+    CREATE TRIGGER IF NOT EXISTS no_block_on_booking BEFORE INSERT ON blocks
+      WHEN EXISTS (SELECT 1 FROM bookings WHERE date = NEW.date AND time = NEW.time)
+      BEGIN SELECT RAISE(ABORT, 'slot booked'); END;`);
   const insert = db.prepare('INSERT INTO bookings (code,name,phone,service,price,date,time) VALUES (?,?,?,?,?,?,?)');
   if (legacyFile && !db.prepare('SELECT 1 FROM migrations WHERE name = ?').get('legacy-json')) {
     let records = [];
@@ -28,6 +38,11 @@ export async function openDatabase(filename, legacyFile) {
   return {
     get: code => db.prepare('SELECT * FROM bookings WHERE code = ?').get(code),
     occupied: date => new Set(db.prepare('SELECT time FROM bookings WHERE date = ?').all(date).map(row => row.time)),
+    blocked: date => new Set(db.prepare('SELECT time FROM blocks WHERE date = ?').all(date).map(row => row.time)),
+    list: date => db.prepare('SELECT * FROM bookings WHERE date = ? ORDER BY time').all(date),
+    blocks: date => db.prepare('SELECT * FROM blocks WHERE date = ? ORDER BY time').all(date),
+    block: (date,time,reason) => db.prepare('INSERT INTO blocks (date,time,reason) VALUES (?,?,?)').run(date,time,reason),
+    unblock: (date,time) => db.prepare('DELETE FROM blocks WHERE date = ? AND time = ?').run(date,time).changes > 0,
     create: booking => insert.run(booking.code,booking.name,booking.phone,booking.service,booking.price,booking.date,booking.time),
     remove: code => db.prepare('DELETE FROM bookings WHERE code = ?').run(code).changes > 0,
     close: () => db.close(),

@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="pt-BR">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#183d32"><title>Painel — Nelson Cabeleireiro</title><link rel="icon" href="assets/brand.svg"><link rel="stylesheet" href="styles.css?v=2"><link rel="stylesheet" href="admin.css"><script src="admin.js" defer></script></head>
+<body>
+  <a class="skip-link" href="#panel-content">Pular para o painel</a>
+  <header class="container header"><a href="/" class="brand"><img src="assets/brand.svg" alt="" width="44" height="44"><span>NELSON<small>CABELEIREIRO</small></span></a><div class="admin-header-actions"><a href="/" class="text-link">Ver site ↗</a><button id="logout" class="button button-small" hidden>Sair</button></div></header>
+  <main id="panel-content" class="container admin-main">
+    <section id="login-panel" class="login-panel"><p class="eyebrow">ACESSO DO BARBEIRO</p><h1>Sua agenda.<br><em>Sob controle.</em></h1><p>Entre para gerenciar os agendamentos e preparar seu dia.</p><form id="login"><label for="password">Senha de administrador</label><input id="password" type="password" autocomplete="current-password" required maxlength="256"><button class="button" type="submit">Entrar no painel ↗</button><p id="login-status" class="status" role="status"></p></form></section>
+    <section id="dashboard" hidden>
+      <div class="admin-title"><div><p class="eyebrow">PAINEL ADMINISTRATIVO</p><h1>Bom trabalho.<br><em>Vamos à agenda.</em></h1></div><p>Agendamentos e bloqueios em um só lugar.<br>Horários no fuso de Fortaleza · UTC−3</p></div>
+      <form id="date-filter" class="date-toolbar"><button id="previous-day" type="button" aria-label="Dia anterior">←</button><div><label for="date">Dia de atendimento</label><input id="date" type="date" required></div><button id="next-day" type="button" aria-label="Próximo dia">→</button><button class="button button-small" type="submit">Atualizar</button><button id="today" class="button button-outline button-small" type="button">Hoje</button></form>
+      <p id="panel-status" class="status" role="status"></p>
+      <div class="admin-stats"><article><span>AGENDAMENTOS</span><strong id="booking-count">—</strong><small>No dia selecionado</small></article><article><span>HORÁRIOS LIVRES</span><strong id="free-count">—</strong><small>Disponíveis para reservar</small></article><article><span>BLOQUEIOS</span><strong id="block-count">—</strong><small>Horários sem atendimento</small></article></div>
+      <div class="admin-grid"><section class="admin-card"><div class="admin-card-heading"><h2>Agendamentos</h2><span id="schedule-date"></span></div><div id="appointments" aria-live="polite"></div></section><section class="admin-card"><h2>Bloquear horário</h2><p class="field-note">Reserve um intervalo para pausa ou compromisso. Horários com clientes precisam ser cancelados antes.</p><form id="block-form"><label for="block-time">Horário no dia selecionado</label><select id="block-time" required></select><label for="reason">Motivo interno (opcional)</label><input id="reason" maxlength="120" placeholder="Ex.: pausa para almoço"><button class="button" id="block-submit" type="submit">Bloquear horário</button></form><h3 class="blocks-title">Horários bloqueados</h3><div id="blocks"></div></section></div>
+    </section>
+  </main>
+  <footer class="container footer"><p>Nelson Cabeleireiro · Painel administrativo</p><p>Os dados dos clientes são restritos a este acesso.</p></footer>
+  <dialog id="action-dialog"><p class="eyebrow">CONFIRMAR AÇÃO</p><h2 id="action-title"></h2><p id="action-description"></p><div class="dialog-actions"><button id="dismiss-action" class="button button-outline">Voltar</button><button id="confirm-action" class="button">Confirmar</button></div><p id="action-status" class="status" role="status"></p></dialog>
+</body></html>

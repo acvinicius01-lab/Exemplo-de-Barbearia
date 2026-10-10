@@ -1,0 +1,21 @@
+# Serviço pago com disco persistente. Revise o custo no Render antes de criar.
+services:
+  - type: web
+    name: nelson-cabeleireiro
+    runtime: docker
+    repo: https://github.com/acvinicius01-lab/Exemplo-de-Barbearia
+    branch: main
+    plan: 0.5c-512mb
+    healthCheckPath: /health
+    autoDeployTrigger: checksPass
+    disk:
+      name: reservas
+      mountPath: /app/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_PATH
+        value: /app/data/reservas.sqlite
+      - key: ADMIN_PASSWORD
+        generateValue: true

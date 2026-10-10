@@ -1,0 +1,9 @@
+.git
+data
+node_modules
+assets/previous-*
+.env
+.env.*
+cloudflared.exe
+tunnel.log
+tests
