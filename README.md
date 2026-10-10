@@ -1,32 +1,87 @@
-# Linha Fina — exemplo funcional
+# Nelson Cabeleireiro — Beleza natural
 
-Design baseado nos arquivos fornecidos, com HTML, CSS, JavaScript e servidor Node.js sem dependências externas.
+Projeto refeito com HTML, CSS e JavaScript puro. O servidor também usa JavaScript (Node.js), com SQLite para armazenamento persistente e sem dependências de npm.
 
-## Como executar
+## Executar
 
-Instale Node.js 20 ou superior. Abra um terminal nesta pasta e execute:
+Use Node.js **22.13 ou superior** (Node.js 24 recomendado para este projeto):
 
 ```sh
 npm start
 ```
 
-Acesse http://localhost:3000. Não abra index.html diretamente: a agenda precisa do servidor.
+Abra **http://localhost:3000**. Não abra o HTML diretamente: a agenda precisa da API. No PowerShell, se `npm` for bloqueado pela política de scripts, use `npm.cmd start`.
+
+## Organização
+
+| Arquivo | Responsabilidade |
+| --- | --- |
+| `index.html` | Estrutura semântica da página e formulários |
+| `styles.css` | Identidade visual, responsividade e acessibilidade |
+| `app.js` | Calendário, escolha de serviço, formulários e comunicação com a API |
+| `assets/brand.svg` | Símbolo da marca e favicon |
+| `assets/barber-art.svg` | Ilustração vetorial local da barbearia |
+| `services.mjs` | Serviços, descrições e preços usados pelo site e servidor |
+| `server.mjs` | API, validação e entrega dos arquivos públicos |
+| `database.mjs` | Persistência SQLite e migração do JSON |
+| `tests/bookings.test.mjs` | Testes de migração e integração da API |
+
+Os arquivos anteriores foram preservados em `assets/previous-*`, ignorados pelo Git e não servidos pela API. As fontes usam Google Fonts e têm alternativas locais quando a conexão não está disponível. As ilustrações não dependem de serviços externos.
 
 ## Funcionalidades
 
-- Navegação responsiva e seleção de serviço.
-- Calendário mensal, dias fechados e horários passados bloqueados.
-- Disponibilidade consultada no servidor.
-- Reserva com nome, telefone com DDD, serviço, valor e código de confirmação.
-- Bloqueio de reservas duplicadas, inclusive pedidos simultâneos na mesma instância.
-- Consulta e cancelamento pelo código, liberando o horário.
-- Cópia da confirmação.
-- Persistência em data/reservas.json, inclusive após reiniciar o servidor.
+- Layout para computador e celular, com menu móvel.
+- Serviços selecionáveis e resumo de preço e horário.
+- Calendário no fuso `America/Fortaleza`, independente do fuso do dispositivo.
+- Disponibilidade consultada no servidor; horários passados, domingo e segunda bloqueados.
+- Reserva com nome, telefone com DDD e código de confirmação.
+- Consulta e cancelamento pelo código, com confirmação antes de cancelar.
+- Cópia da confirmação e mensagens para erros de conexão.
+- Restrição `UNIQUE(date, time)` no banco para evitar duas reservas no mesmo horário.
+- Arquivos públicos permitidos explicitamente: o banco e os dados dos clientes não são expostos por URL.
 
-Terça a sexta: 9h–19h; sábado: 9h–17h. Cada reserva ocupa uma hora. Fuso: America/Fortaleza.
+Cada serviço ocupa uma hora. Os horários começam às 9h, com último início às 18h de terça a sexta e às 16h no sábado. A navegação da agenda permite visualizar até seis meses à frente.
 
-## Personalização e limites
+## Banco de dados e migração
 
-Edite index.html para textos e aparência. Serviços, valores e regras de horário estão em server.mjs. O endereço permanece fictício. Não há envio automático de WhatsApp, cobrança ou pagamentos. O código dá acesso à consulta e cancelamento: guarde-o com cuidado.
+Na primeira inicialização, o servidor cria `data/reservas.sqlite` e importa `data/reservas.json` numa transação. Preserva o JSON original, os dados e os códigos. Uma marca de migração impede nova importação após cancelamentos ou reinícios. Se houver dados inválidos ou horários duplicados no arquivo antigo, a migração falha sem apagar o JSON.
 
-Este exemplo usa arquivo JSON e uma única instância de servidor, acessível apenas neste computador. Para publicação comercial, implemente banco transacional, HTTPS, controle de acesso e proteção contra abuso. Não publique a pasta data: ela contém informações dos clientes.
+A partir da migração, novas reservas e cancelamentos são gravados **somente no SQLite**. O JSON antigo é uma cópia histórica; editar esse arquivo não atualiza a agenda.
+
+Guarde o código da reserva: ele permite consultar e cancelar o agendamento. Não publique a pasta `data`, o arquivo `.env` nem cópias de banco. Para backup, pare o servidor e copie o banco; com ele em execução, use um procedimento de backup compatível com SQLite/WAL.
+
+## Personalizar
+
+- Marca, textos e Instagram: `index.html`.
+- Cores, fontes e espaçamento: `styles.css`.
+- Serviços e preços: `services.mjs`.
+- Dias e horários: função `slots` em `server.mjs` e indicação visual em `app.js`/`index.html`.
+- Porta e endereço de escuta: variáveis `PORT` e `HOST`.
+- Caminho do banco: variável `DATABASE_PATH`.
+
+O `.env.example` documenta as variáveis. O servidor não lê `.env` automaticamente. Para usá-lo, crie seu `.env` e execute:
+
+```sh
+node --env-file=.env server.mjs
+```
+
+## Verificar
+
+```sh
+npm run check
+npm test
+```
+
+Os testes usam bancos temporários, sem alterar suas reservas. Verificam migração, reserva concorrente, persistência após reiniciar, consulta, cancelamento, validação de dados e bloqueio de acesso aos arquivos privados.
+
+## Publicar na internet
+
+Esta entrega é local, ainda não publicada. O projeto precisa de uma hospedagem que execute Node.js 22.13+ e forneça **volume persistente** para o banco. Configure `DATABASE_PATH` nesse volume, `PORT` conforme a hospedagem e HTTPS no domínio. Publique o servidor junto com os arquivos de interface; uma hospedagem apenas de HTML não executa esta API.
+
+Para hospedar com disco temporário, funções sem servidor ou várias máquinas, adapte `database.mjs` para um banco compartilhado na nuvem. O SQLite atual é adequado a uma implantação com armazenamento local persistente; ele não cria automaticamente um banco na nuvem.
+
+Antes de usar para atendimento real, confirme serviços, valores, endereço e horários com Nelson, substitua os avisos de demonstração, defina a política de privacidade e acrescente limites de requisição na hospedagem. Não há painel administrativo, pagamentos ou integração de WhatsApp nesta versão.
+
+## Informações confirmadas e exemplos
+
+Identidade: Barbearia Nelson Cabeleireiro; Nelson Pinheiro; frase “Beleza natural”; Instagram `@barbearia.nelsoncabeleireiro`. Foram mantidas as informações da versão anterior. Preços e horários são exemplos; corte infantil tem valor a consultar. Endereço e WhatsApp não foram informados. Reservas desta versão são testes.
