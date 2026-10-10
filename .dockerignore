@@ -7,3 +7,9 @@ assets/previous-*
 cloudflared.exe
 tunnel.log
 tests
+backups
+*.enc
+*.key
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm

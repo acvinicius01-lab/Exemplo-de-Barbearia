@@ -52,6 +52,8 @@ Cada serviço ocupa uma hora. Os horários começam às 9h, com último início 
 
 ## Banco de dados e migração
 
+Clientes, serviços e reservas agora possuem tabelas relacionadas por chaves estrangeiras. Consulte [DATABASE.md](DATABASE.md) para o modelo, permissões, migração, backups criptografados e recuperação. Comandos: `npm run backup` e `npm run restore -- arquivo.enc novo-banco.sqlite`.
+
 Na primeira inicialização, o servidor cria `data/reservas.sqlite` e importa `data/reservas.json` numa transação. Preserva o JSON original, os dados e os códigos. Uma marca de migração impede nova importação após cancelamentos ou reinícios. Se houver dados inválidos ou horários duplicados no arquivo antigo, a migração falha sem apagar o JSON.
 
 A partir da migração, novas reservas e cancelamentos são gravados **somente no SQLite**. O JSON antigo é uma cópia histórica; editar esse arquivo não atualiza a agenda.

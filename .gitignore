@@ -6,3 +6,9 @@ tunnel.log
 .env.*
 !.env.example
 assets/previous-*
+backups/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.enc
+*.key

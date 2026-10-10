@@ -19,3 +19,5 @@ services:
         value: /app/data/reservas.sqlite
       - key: ADMIN_PASSWORD
         generateValue: true
+      - key: BACKUP_INTERVAL_HOURS
+        value: '24'

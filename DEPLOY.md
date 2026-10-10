@@ -33,6 +33,8 @@ Nenhum domínio próprio foi comprado ou configurado nesta entrega.
 
 ## Administração
 
+O Blueprint também ativa backups criptografados a cada 24 horas. Eles ficam no volume persistente junto ao banco; copie os arquivos e a chave para locais externos privados. Consulte [DATABASE.md](DATABASE.md) para recuperação, retenção e proteção da chave. Não há armazenamento externo de backups configurado automaticamente.
+
 - Sessões duram 8 horas e são encerradas quando o servidor reinicia.
 - Logout invalida a sessão no servidor.
 - Cinco falhas de login por endereço de conexão suspendem novas tentativas por 10 minutos. Atrás de um proxy, os acessos podem compartilhar esse limite, pois o servidor não confia em cabeçalhos de IP arbitrários.

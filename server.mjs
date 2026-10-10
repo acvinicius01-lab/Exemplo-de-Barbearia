@@ -2,13 +2,24 @@ import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { randomBytes } from 'node:crypto';
 import { openDatabase, defaultDatabasePath } from './database.mjs';
-import { services } from './services.mjs';
+import { backupDatabase } from './backups.mjs';
 import { createAuth } from './admin-auth.mjs';
 
 const base = new URL('./', import.meta.url);
 const today = () => new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Fortaleza',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 const database = await openDatabase(process.env.DATABASE_PATH || defaultDatabasePath, process.env.DATABASE_PATH ? null : new URL('./data/reservas.json',base));
 const auth = await createAuth();
+const services = database.services();
+const backupHours = Number(process.env.BACKUP_INTERVAL_HOURS || 0);
+let backingUp = false;
+async function runBackup() {
+  if (backingUp) return;
+  backingUp = true;
+  try { await backupDatabase(process.env.DATABASE_PATH || defaultDatabasePath,{directory:process.env.BACKUP_DIRECTORY,keyFile:process.env.BACKUP_KEY_FILE}); console.log('Backup criptografado concluído.'); }
+  catch (error) { console.error('Falha no backup:',error.code || error.name); }
+  finally { backingUp = false; }
+}
+if (Number.isFinite(backupHours) && backupHours > 0 && backupHours <= 24*20) { await runBackup(); setInterval(runBackup,backupHours*60*60*1000).unref(); }
 const staticFiles = new Map([
   ['/', ['index.html','text/html']], ['/index.html',['index.html','text/html']],
   ['/styles.css',['styles.css','text/css']], ['/app.js',['app.js','text/javascript']],
