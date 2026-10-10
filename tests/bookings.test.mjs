@@ -65,6 +65,9 @@ test('API cria, bloqueia concorrência, consulta, persiste e cancela reservas', 
     assert.equal((await call('/api/bookings',{method:'POST',headers:{'Content-Type':'application/json'},body:'{'})).status,400);
     assert.equal((await call('/api/bookings',{...options(record),headers:{'Content-Type':'application/json','Sec-Fetch-Site':'cross-site'}})).status,403);
     assert.equal((await call('/data/reservas.sqlite')).status,404);
-    for(const file of ['/','/styles.css','/app.js','/assets/barber-art.svg']) assert.equal((await call(file)).status,200);
+    for(const file of ['/','/styles.css?v=3','/app.js?v=3','/api-client.mjs','/admin.js?v=3','/admin.css?v=3','/assets/barber-art.svg']) {
+      const response = await call(file); assert.equal(response.status,200);
+      if (file.includes('.mjs') || file.includes('.js')) assert.match(response.headers.get('content-type'),/text\/javascript/);
+    }
   } finally { await stop(); await rm(directory,{recursive:true,force:true}); }
 });

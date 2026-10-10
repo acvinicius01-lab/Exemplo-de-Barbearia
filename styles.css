@@ -11,6 +11,15 @@
   background:var(--cream)
 }
 
+/* Evita que textos e controles alarguem as colunas em telas pequenas. */
+img { max-width: 100%; height: auto; }
+.hero > *, .about-grid > *, .booking-layout > *, .reservation-grid > *,
+.service-card, .schedule-panel, .booking-panel, .lookup-panel { min-width: 0; }
+.service-choice span, .service-price strong, .booking-summary strong { overflow-wrap: anywhere; }
+input, select { font-size: 16px; }
+.button { white-space: normal; text-align: center; }
+.hero-art > img { aspect-ratio: 540 / 620; }
+
 *{
   box-sizing:border-box
 }
@@ -1200,6 +1209,7 @@ h2{
   html{
   scroll-behavior:auto
 }
+
 *,*::before,*::after{
   transition:none!important;
   animation:none!important
@@ -1207,3 +1217,33 @@ h2{
 
 }
 
+
+/* Controles confortáveis para toque, sem reduzir as colunas do calendário. */
+input, select { font-size: 16px; }
+@media (pointer: coarse) {
+  .slot, .date-btn, .month-nav button, .menu-toggle { min-height: 44px; }
+  .service-price a, .month-nav button, .menu-toggle { min-width: 44px; }
+}
+@media (max-width: 720px) {
+  .hero { grid-template-columns: minmax(0, 1fr); }
+  .booking-layout, .reservation-grid, .about-grid { grid-template-columns: minmax(0, 1fr); }
+  .hero-actions { flex-wrap: wrap; }
+  .calendar-legend, .day-heading { flex-wrap: wrap; }
+  .slots { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .service-choices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dialog-close { min-width: 44px; min-height: 44px; }
+}
+@media (max-width: 420px) {
+  .container { width: calc(100% - 32px); }
+  .schedule-panel, .booking-panel, .lookup-panel { padding: 18px; }
+  .service-choices { grid-template-columns: minmax(0, 1fr); }
+  .lookup-row { flex-wrap: wrap; }
+  .lookup-row .button { width: 100%; }
+  .hero h1 { font-size: clamp(32px, 9.5vw, 40px); }
+  .hero-actions .button { width: 100%; }
+  .floating-note { left: -8px; font-size: 14px; }
+  .instagram-card { padding: 22px; }
+  .instagram-card strong { font-size: 21px; overflow-wrap: anywhere; }
+  .dialog-actions { flex-direction: column; }
+  dialog { padding: 26px 22px; }
+}

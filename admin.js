@@ -1,3 +1,4 @@
+import { createApiClient } from './api-client.mjs';
 const $ = selector => document.querySelector(selector);
 let today = '', pendingAction = null, requestId = 0;
 const message = (selector,text = '',error = false) => { $(selector).textContent = text; $(selector).classList.toggle('error',error); };
@@ -5,21 +6,17 @@ const node = (tag,className,text) => { const element = document.createElement(ta
 const future = (date,time) => new Date(`${date}T${time}:00-03:00`) > new Date();
 const dateLabel = date => new Date(`${date}T12:00:00-03:00`).toLocaleDateString('pt-BR',{timeZone:'America/Fortaleza',day:'2-digit',month:'long',year:'numeric'});
 
-function showLogin() { $('#dashboard').hidden = true; $('#logout').hidden = true; $('#login-panel').hidden = false; $('#appointments').replaceChildren(); $('#blocks').replaceChildren(); $('#action-dialog').close(); }
+function showLogin() { requestId++; pendingAction = null; $('#dashboard').hidden = true; $('#logout').hidden = true; $('#login-panel').hidden = false; $('#appointments').replaceChildren(); $('#blocks').replaceChildren(); $('#action-dialog').close(); }
 function showDashboard() { $('#login-panel').hidden = true; $('#dashboard').hidden = false; $('#logout').hidden = false; }
-async function api(path,options = {}) {
-  const response = await fetch(`/api/admin/${path}`,{...options,credentials:'same-origin'});
-  const data = await response.json();
-  if (!response.ok) { if (response.status === 401 && path !== 'login') showLogin(); throw new Error(data.error || 'Não foi possível concluir.'); }
-  return data;
-}
+const api = createApiClient({base:'/api/admin/',onUnauthorized:path => { if (path !== 'login') { showLogin(); message('#login-status','Sua sessão terminou. Entre novamente para continuar.'); } }});
 const post = data => ({method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
 
 function ask(title,description,action) { pendingAction = action; $('#action-title').textContent = title; $('#action-description').textContent = description; message('#action-status'); $('#action-dialog').showModal(); }
 
 async function loadSchedule() {
   const date = $('#date').value; if (!date) return;
-  const id = ++requestId; message('#panel-status','Carregando agenda…');
+  const id = ++requestId; const previousTime = $('#block-time').value; message('#panel-status','Carregando agenda…');
+  $('#dashboard').setAttribute('aria-busy','true');
   $('#block-submit').disabled = true; $('#block-time').replaceChildren(); $('#appointments').replaceChildren(); $('#blocks').replaceChildren();
   for (const selector of ['#booking-count','#block-count','#free-count']) $(selector).textContent = '—';
   try {
@@ -40,6 +37,7 @@ async function loadSchedule() {
     }
     if (!data.bookings.length) $('#appointments').append(node('p','empty-state','Nenhum agendamento neste dia.'));
     for (const time of free) { const option = node('option','',time); option.value = time; $('#block-time').append(option); }
+    if (free.includes(previousTime)) $('#block-time').value = previousTime;
     if (!free.length) { const option = node('option','','Sem horários livres'); option.value = ''; $('#block-time').append(option); }
     $('#block-submit').disabled = !free.length;
     for (const block of data.blocks) {
@@ -51,6 +49,7 @@ async function loadSchedule() {
     if (!data.blocks.length) $('#blocks').append(node('p','field-note','Nenhum horário bloqueado.'));
     message('#panel-status', data.slots.length ? '' : 'A barbearia está fechada neste dia.');
   } catch (error) { if (id === requestId) message('#panel-status',error.message,true); }
+  finally { if (id === requestId || $('#dashboard').hidden) $('#dashboard').setAttribute('aria-busy','false'); }
 }
 
 $('#login').onsubmit = async event => { event.preventDefault(); const button = event.target.querySelector('button'); button.disabled = true; message('#login-status','Entrando…'); try { await api('login',post({password:$('#password').value})); $('#password').value = ''; const session = await api('session'); today = session.today; $('#date').value = today; showDashboard(); message('#login-status'); await loadSchedule(); } catch (error) { message('#login-status',error.message,true); } finally { button.disabled = false; } };
@@ -64,5 +63,7 @@ $('#block-form').onsubmit = event => { event.preventDefault(); if (!$('#block-ti
 $('#dismiss-action').onclick = () => $('#action-dialog').close();
 $('#confirm-action').onclick = async () => { if (!pendingAction) return; const action = pendingAction; $('#confirm-action').disabled = true; $('#dismiss-action').disabled = true; message('#action-status','Salvando…'); try { await action(); pendingAction = null; $('#action-dialog').close(); $('#reason').value = ''; await loadSchedule(); } catch (error) { message('#action-status',error.message,true); } finally { $('#confirm-action').disabled = false; $('#dismiss-action').disabled = false; } };
 $('#action-dialog').addEventListener('cancel',event => { if ($('#confirm-action').disabled) event.preventDefault(); });
-window.addEventListener('focus',() => { if (!$('#dashboard').hidden) loadSchedule(); });
-(async () => { try { const session = await api('session'); today = session.today; $('#date').value = today; showDashboard(); await loadSchedule(); } catch { showLogin(); } })();
+const refreshSchedule = () => { if (!$('#dashboard').hidden && !$('#action-dialog').open) loadSchedule(); };
+window.addEventListener('focus',refreshSchedule);
+document.addEventListener('visibilitychange',() => { if (!document.hidden) refreshSchedule(); });
+(async () => { try { const session = await api('session'); today = session.today; $('#date').value = today; showDashboard(); await loadSchedule(); } catch (error) { showLogin(); if (error.status !== 401) message('#login-status',error.message,true); } })();

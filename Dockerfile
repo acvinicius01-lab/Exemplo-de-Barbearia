@@ -1,7 +1,7 @@
 FROM node:24-bookworm-slim
 ENV NODE_ENV=production HOST=0.0.0.0 PORT=3000 DATABASE_PATH=/app/data/reservas.sqlite
 WORKDIR /app
-COPY --chown=node:node package.json server.mjs database.mjs services.mjs admin-auth.mjs ./
+COPY --chown=node:node package.json server.mjs database.mjs services.mjs admin-auth.mjs api-client.mjs ./
 COPY --chown=node:node index.html styles.css app.js admin.html admin.css admin.js ./
 COPY --chown=node:node assets/brand.svg assets/barber-art.svg ./assets/
 RUN mkdir -p /app/data && chown node:node /app/data

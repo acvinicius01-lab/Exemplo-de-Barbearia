@@ -12,6 +12,7 @@ const auth = await createAuth();
 const staticFiles = new Map([
   ['/', ['index.html','text/html']], ['/index.html',['index.html','text/html']],
   ['/styles.css',['styles.css','text/css']], ['/app.js',['app.js','text/javascript']],
+  ['/api-client.mjs',['api-client.mjs','text/javascript']],
   ['/admin',['admin.html','text/html']], ['/admin.html',['admin.html','text/html']],
   ['/admin.css',['admin.css','text/css']], ['/admin.js',['admin.js','text/javascript']],
   ['/assets/brand.svg',['assets/brand.svg','image/svg+xml']], ['/assets/barber-art.svg',['assets/barber-art.svg','image/svg+xml']],

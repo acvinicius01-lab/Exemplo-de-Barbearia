@@ -75,6 +75,10 @@ node --env-file=.env server.mjs
 
 ## Verificar
 
+O site e o painel compartilham `api-client.mjs`, que envia as credenciais da sessão, preserva os erros da API e trata falhas de rede/timeout sem repetir gravações. O botão de reserva só é liberado depois da consulta de disponibilidade e da seleção do horário. A agenda é atualizada após operações e ao retornar à aba.
+
+Os layouts incluem ajustes para telas estreitas (320–420 px), celular (até 720 px), tablet e desktop: colunas flexíveis, filtros empilhados, campos de 16 px e controles de toque ampliados. A sessão atual não possui navegador disponível para inspeção visual; essas alterações ainda precisam de uma conferência visual em dispositivos reais.
+
 ```sh
 npm run check
 npm test

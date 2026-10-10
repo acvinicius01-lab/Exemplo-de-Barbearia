@@ -1,25 +1,12 @@
+import { createApiClient } from './api-client.mjs';
+const api = createApiClient();
 const $ = selector => document.querySelector(selector);
-const state = { services: [], service: null, today: '', day: '', month: '', time: null, request: 0, found: null };
+const state = { services: [], service: null, today: '', day: '', month: '', time: null, request: 0, found: null, loading:false, saving:false };
 const money = value => value === null ? 'A consultar' : new Intl.NumberFormat('pt-BR', {style:'currency', currency:'BRL', maximumFractionDigits:0}).format(value);
 const dateObject = date => new Date(`${date}T12:00:00-03:00`);
 const formatDate = (date, options) => dateObject(date).toLocaleDateString('pt-BR', {timeZone:'America/Fortaleza', ...options});
 const dateKey = date => date.toISOString().slice(0,10);
 const status = (selector, message = '', error = false) => { $(selector).textContent = message; $(selector).classList.toggle('error', error); };
-
-async function api(path, options = {}) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
-  try {
-    const response = await fetch(path, {...options, signal:controller.signal});
-    const payload = await response.json();
-    if (!response.ok) { const error = new Error(payload.error || 'Não foi possível concluir.'); error.status = response.status; throw error; }
-    return payload;
-  } catch (error) {
-    if (error.name === 'AbortError') throw new Error('O servidor demorou a responder. Consulte sua reserva antes de tentar novamente.');
-    if (error instanceof TypeError) throw new Error('Não foi possível conectar. Confira sua conexão e tente novamente.');
-    throw error;
-  } finally { clearTimeout(timeout); }
-}
 
 function element(tag, className, content) {
   const node = document.createElement(tag);
@@ -56,6 +43,7 @@ function renderServices() {
 }
 
 function updateSummary() {
+  $('#book-button').disabled = state.loading || state.saving || !state.service || !state.time;
   $('#summary-service').textContent = state.service?.name || 'Selecione um serviço';
   $('#summary-price').textContent = state.service ? money(state.service.price) : '—';
   $('#selection').textContent = state.time ? `${formatDate(state.day,{day:'2-digit',month:'long'})} às ${state.time}` : 'Escolha um dia e um horário disponível.';
@@ -87,6 +75,7 @@ function renderCalendar() {
 async function loadSlots() {
   if (!state.day) return;
   const request = ++state.request;
+  state.loading = true; updateSummary();
   $('#day-title').textContent = formatDate(state.day,{weekday:'short',day:'numeric',month:'long'});
   $('#day-summary').textContent = 'Carregando…'; $('#slots').replaceChildren(); $('#slots').setAttribute('aria-busy','true');
   try {
@@ -111,7 +100,7 @@ async function loadSlots() {
     state.time = null; updateSummary(); $('#day-summary').textContent = 'Falha ao carregar';
     $('#slots').append(element('p','',error.message));
     const retry = element('button','slot','Tentar novamente'); retry.type = 'button'; retry.onclick = loadSlots; $('#slots').append(retry);
-  } finally { if (request === state.request) $('#slots').setAttribute('aria-busy','false'); }
+  } finally { if (request === state.request) { state.loading = false; $('#slots').setAttribute('aria-busy','false'); updateSummary(); } }
 }
 
 function changeMonth(offset) {
@@ -141,14 +130,14 @@ $('#booking').onsubmit = async event => {
   if (!state.service || !state.time) { status('#booking-status','Escolha um serviço, um dia e um horário disponível.',true); $('#agenda').scrollIntoView({behavior:'smooth'}); return; }
   const phone = $('#phone').value.replace(/\D/g,'');
   if (!/^\d{10,11}$/.test(phone)) { $('#phone').setCustomValidity('Informe um telefone com DDD e 10 ou 11 dígitos.'); $('#phone').reportValidity(); return; }
-  const button = $('#book-button'); button.disabled = true; button.textContent = 'Reservando…'; status('#booking-status');
+  const button = $('#book-button'); state.saving = true; updateSummary(); button.textContent = 'Reservando…'; status('#booking-status');
   try {
     const booking = await api('/api/bookings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:$('#name').value.trim(),phone,service:state.service.name,date:state.day,time:state.time})});
     $('#message').textContent = summary(booking); $('#code').value = booking.code; status('#status'); $('#preview').showModal();
     status('#booking-status','Reserva de teste criada. Guarde seu código.');
     state.time = null; updateSummary(); await loadSlots();
   } catch (error) { status('#booking-status',error.message,true); await loadSlots(); }
-  finally { button.disabled = false; button.textContent = 'Confirmar agendamento ↗'; }
+  finally { state.saving = false; updateSummary(); button.textContent = 'Confirmar agendamento ↗'; }
 };
 $('#close').onclick = () => $('#preview').close();
 $('#copy').onclick = async () => { try { await navigator.clipboard.writeText($('#message').textContent); status('#status','Confirmação copiada.'); } catch { status('#status','Selecione e copie o texto da confirmação.'); } };
@@ -168,7 +157,9 @@ $('#confirm-cancel').onclick = async () => {
   catch (error) { status('#cancel-status',error.message,true); }
   finally { $('#confirm-cancel').disabled = false; }
 };
-window.addEventListener('focus',() => loadSlots());
+const refreshAvailability = () => { if (!state.saving && !document.querySelector('dialog[open]')) loadSlots(); };
+window.addEventListener('focus',refreshAvailability);
+document.addEventListener('visibilitychange',() => { if (!document.hidden) refreshAvailability(); });
 
 async function initialize() {
   try {
